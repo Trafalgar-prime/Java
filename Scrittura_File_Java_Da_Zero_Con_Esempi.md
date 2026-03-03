@@ -1,31 +1,33 @@
-# Scrittura su file in Java – Guida completa “da zero” (con esempi completi + spiegazione riga per riga)
+# Scrittura su file in Java — Guida completa “da zero”
+*(con esempi completi + spiegazione riga per riga, codice formattato bene)*
 
-Questa guida mette insieme **tutte le informazioni** discusse in chat su:
-- cosa significa “aprire un file” in scrittura in Java
-- dove viene creato un file (working directory / path)
+Questa guida spiega **tutto il flusso reale** della scrittura su file in Java:
+
+- cosa significa “aprire un file” in scrittura
+- dove viene creato un file (working directory / `Path`)
 - come creare cartelle e file
 - overwrite vs append vs create-new
 - testo vs binario
 - encoding (UTF-8)
-- **tutti i metodi principali di scrittura** (classici + moderni NIO)
-- **un esempio completo per ogni metodo**, con **spiegazione riga per riga**
+- metodi moderni (NIO) e metodi classici (`java.io`)
+- **esempio completo per ogni metodo**, con **spiegazione riga per riga**
 
-> Nota importante: negli esempi uso `Path` e scrivo dentro una cartella `output/`.  
-> Se la cartella non esiste, la creo con `Files.createDirectories(...)`.
+> Nota: in molti esempi scrivo dentro `output/`. Se non esiste, la creo con `Files.createDirectories(...)`.
 
 ---
 
 ## 0) “Aprire un file” in scrittura: cosa significa davvero
 
 In Java, “aprire un file per scrivere” significa:
+
 1. scegliere **dove** scrivere (percorso `Path` o `File`)
 2. scegliere **cosa** scrivere (testo o binario)
 3. scegliere **modalità** (overwrite / append / create-new)
 4. creare un **canale di uscita** (`Writer` o `OutputStream`)
 5. scrivere
-6. **chiudere** (quasi sempre con `try-with-resources`)
+6. **chiudere** (quasi sempre con *try-with-resources*)
 
-In pratica: non “apri” manualmente come in C: **crei un Writer/Stream** e quello apre/crea il file.
+Non “apri” manualmente: **crei un Writer/Stream** e quello apre/crea il file.
 
 ---
 
@@ -34,17 +36,15 @@ In pratica: non “apri” manualmente come in C: **crei un Writer/Stream** e qu
 Se usi un percorso relativo tipo `"file.txt"`, Java lo crea nella **working directory** del programma.
 
 - Terminale: la cartella da cui lanci `java ...`
-- IDE: dipende dalla configurazione Run (molto comune confondersi)
+- IDE: dipende dalla configurazione Run (spesso è la cartella del progetto o `build/` / `target/`)
 
-Per evitare dubbi: usa `Path` e cartelle dedicate (es. `output/`), o un path assoluto.
+Per evitare dubbi, usa `Path` e/o stampa `toAbsolutePath()`.
 
 ---
 
 ## 2) Creare cartelle e file (NIO)
 
 ### 2.1 Creare directory (cartelle)
-
-**Idea:** se vuoi scrivere in `output/risultati.txt` devi essere sicuro che `output/` esista.
 
 📦 Import tipici:
 ```java
@@ -53,7 +53,7 @@ import java.nio.file.Path;
 import java.io.IOException;
 ```
 
-✅ Esempio completo
+✅ **Esempio completo**
 
 ```java
 import java.nio.file.Files;
@@ -75,40 +75,22 @@ public class CreateDirectoriesExample {
 
 #### Spiegazione riga per riga
 
-- `import java.nio.file.Files;`  
-  Importi la classe utility NIO per operazioni su file/cartelle.
-
-- `import java.nio.file.Path;`  
-  Importi `Path`, rappresentazione moderna del percorso.
-
-- `import java.io.IOException;`  
-  Importi l’eccezione checked tipica dell’I/O.
-
-- `public class CreateDirectoriesExample { ... }`  
-  Classe di esempio.
-
-- `public static void main(String[] args) { ... }`  
-  Entry point.
-
 - `Path dir = Path.of("output");`  
-  Crei un percorso relativo alla working directory.
-
+  Crea un percorso (relativo alla working directory).
 - `Files.createDirectories(dir);`  
-  Crea la cartella **se non esiste**, e non dà errore se già esiste.
-
+  Crea la cartella se non esiste (se esiste, non dà errore).
 - `dir.toAbsolutePath()`  
-  Ti stampa dove è davvero la cartella sul disco (utile per capire la working directory).
-
+  Ti fa capire *dove* stai scrivendo davvero.
 - `catch (IOException e)`  
-  Gestisce problemi di permessi o I/O.
+  Gestisce errori di permessi o I/O.
 
 ---
 
 ### 2.2 Creare un file vuoto
 
-- `Files.createFile(path)` crea il file **solo se non esiste** (se esiste → eccezione).
+`Files.createFile(path)` crea il file **solo se non esiste** (se esiste → eccezione).
 
-✅ Esempio completo
+✅ **Esempio completo**
 
 ```java
 import java.nio.file.Files;
@@ -119,8 +101,10 @@ public class CreateFileExample {
     public static void main(String[] args) {
         try {
             Path file = Path.of("output", "vuoto.txt");
+
             Files.createDirectories(file.getParent());
             Files.createFile(file);
+
             System.out.println("Creato file: " + file.toAbsolutePath());
         } catch (IOException e) {
             e.printStackTrace();
@@ -132,22 +116,17 @@ public class CreateFileExample {
 #### Spiegazione riga per riga
 
 - `Path file = Path.of("output", "vuoto.txt");`  
-  Percorso `output/vuoto.txt` (portabile).
-
-- `file.getParent()`  
-  Ritorna la cartella padre (`output`).
-
+  Percorso portabile (`output/vuoto.txt`).
 - `Files.createDirectories(file.getParent());`  
-  Crea la cartella se manca.
-
+  Crea `output/` se manca.
 - `Files.createFile(file);`  
-  Crea il file vuoto. Se esiste già → eccezione.
+  Crea il file vuoto. Se esiste già, lancia `FileAlreadyExistsException` (sottoclasse di `IOException`).
 
-**Nota pratica:** spesso non serve chiamare `createFile` se poi scrivi con opzioni `CREATE`/`CREATE_NEW`.
+> Nota: spesso non serve creare a mano il file se poi scrivi con `CREATE`/`CREATE_NEW`.
 
 ---
 
-## 3) Overwrite vs Append vs Create-New (la parte più importante)
+## 3) Overwrite vs Append vs Create-New (fondamentale)
 
 Con NIO usi `StandardOpenOption`.
 
@@ -157,6 +136,7 @@ import java.nio.file.StandardOpenOption;
 ```
 
 Opzioni principali:
+
 - `CREATE` → crea il file se non esiste
 - `APPEND` → aggiunge in fondo
 - `TRUNCATE_EXISTING` → svuota il file se esiste (overwrite “pulito”)
@@ -180,25 +160,38 @@ Usi `OutputStream`:
 
 ## 5) Encoding (UTF-8): non lasciarlo al caso
 
-Molti problemi “misteriosi” con accenti, simboli e testi tra Windows/Linux derivano dall’encoding.
+Molti problemi con accenti e simboli derivano dall’encoding di default del sistema.
 
 📦 Import:
 ```java
 import java.nio.charset.StandardCharsets;
 ```
 
-Con NIO puoi specificare esplicitamente `StandardCharsets.UTF_8` (consigliato).
+Nei progetti moderni: **UTF-8** quasi sempre.
 
 ---
 
 # PARTE A — Metodi moderni consigliati (NIO)
 
-## A1) `Files.writeString()` (Java 11+) – testo semplice
+## A1) `Files.writeString()` (Java 11+) — testo semplice
 
 ### Quando usarlo
-- Hai una **String** finale e vuoi scriverla in modo semplice e moderno.
+Hai una `String` finale e vuoi scriverla in modo pulito.
 
-### Esempio completo: create + overwrite (svuota e riscrive)
+---
+
+### A1.1 Esempio completo: create + overwrite
+
+📦 Import:
+```java
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.nio.charset.StandardCharsets;
+import java.io.IOException;
+```
+
+✅ **Codice**
 
 ```java
 import java.nio.file.Files;
@@ -233,24 +226,16 @@ public class WriteStringOverwrite {
 
 #### Spiegazione riga per riga
 
-- `Path file = Path.of("output", "writeString_overwrite.txt");`  
-  Scegli dove scrivere.
-
-- `String content = "Prima riga\nSeconda riga\n";`  
-  Il contenuto testuale da scrivere.
-
-- `Files.createDirectories(file.getParent());`  
-  Crea `output/` se manca.
-
-- `Files.writeString(..., UTF_8, CREATE, TRUNCATE_EXISTING)`  
-  Scrive la stringa:
-  - `CREATE`: crea il file se non esiste
-  - `TRUNCATE_EXISTING`: se esiste, lo svuota prima (overwrite)
-  - `UTF_8`: encoding stabile
+- `Path file = Path.of("output", "...");` → scegli il percorso.
+- `Files.createDirectories(file.getParent());` → crea la cartella se manca.
+- `Files.writeString(..., UTF_8, CREATE, TRUNCATE_EXISTING)` →  
+  crea il file se manca, e se esiste lo svuota e riscrive tutto.
 
 ---
 
-### Esempio completo: create + append (aggiunge in fondo)
+### A1.2 Esempio completo: create + append
+
+✅ **Codice**
 
 ```java
 import java.nio.file.Files;
@@ -285,17 +270,30 @@ public class WriteStringAppend {
 
 #### Spiegazione riga per riga
 
-- `APPEND` aggiunge il testo in fondo.  
-- `CREATE` fa sì che il file venga creato se ancora non esiste.
+- `CREATE` → crea il file se non esiste.
+- `APPEND` → aggiunge in fondo senza cancellare nulla.
 
 ---
 
-## A2) `Files.write()` – scrivere una `List<String>` (righe)
+## A2) `Files.write()` — scrivere una `List<String>` (righe)
 
 ### Quando usarlo
-- Hai già le righe separate (lista) e vuoi scriverle come file di testo.
+Hai righe già separate e vuoi scrivere un file “a righe”.
 
-### Esempio completo: write righe (overwrite)
+---
+
+### A2.1 Esempio completo: overwrite
+
+📦 Import:
+```java
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
+import java.io.IOException;
+import java.util.List;
+```
+
+✅ **Codice**
 
 ```java
 import java.nio.file.Files;
@@ -322,16 +320,19 @@ public class WriteLinesOverwrite {
 
 #### Spiegazione riga per riga
 
-- `List<String> lines = List.of(...)`  
-  La lista di righe (ogni elemento è una riga).
-
-- `Files.write(file, lines, UTF_8)`  
-  Scrive le righe in UTF-8.  
-  Di default sovrascrive (comportamento tipico per la maggior parte dei casi).
+- `List.of(...)` → crea una lista immutabile di righe.
+- `Files.write(file, lines, UTF_8)` → scrive le righe (di default sovrascrive).
 
 ---
 
-### Esempio completo: append righe con opzioni
+### A2.2 Esempio completo: append righe con opzioni
+
+📦 Import:
+```java
+import java.nio.file.StandardOpenOption;
+```
+
+✅ **Codice**
 
 ```java
 import java.nio.file.Files;
@@ -367,18 +368,19 @@ public class WriteLinesAppend {
 
 #### Spiegazione riga per riga
 
-- `Files.write(..., CREATE, APPEND)`  
-  Appende le righe in fondo; crea il file se manca.
+- `CREATE` + `APPEND` → crea se manca, poi aggiunge in fondo.
 
 ---
 
-## A3) `Files.newBufferedWriter()` – controllo massimo (testo grande / generato in loop)
+## A3) `Files.newBufferedWriter()` — controllo massimo (testo grande / generato in loop)
 
 ### Quando usarlo
-- Stai generando un file grande (report, CSV, log) riga per riga.
-- Vuoi buffer + API moderna + controllo.
+Stai generando un file lungo riga per riga e vuoi:
+- buffer
+- newline corretto (`newLine()`)
+- encoding controllato (UTF-8)
 
-### Esempio completo
+✅ **Codice**
 
 ```java
 import java.nio.file.Files;
@@ -412,26 +414,24 @@ public class NewBufferedWriterExample {
 
 #### Spiegazione riga per riga
 
-- `Files.newBufferedWriter(file, UTF_8)`  
-  Apre (o crea) un buffered writer in UTF-8.
-
-- `try (BufferedWriter writer = ...) { ... }`  
-  Try-with-resources: chiude e fa flush automaticamente.
-
-- `writer.newLine()`  
-  Scrive il newline corretto per il sistema.
+- `Files.newBufferedWriter(file, UTF_8)` → apre un `BufferedWriter` moderno in UTF-8.
+- `try (BufferedWriter writer = ...)` → chiusura automatica + flush automatico.
+- `writer.newLine()` → newline corretto per OS.
 
 ---
 
-# PARTE B — Metodi classici (java.io)
+# PARTE B — Metodi classici (`java.io`)
 
-## B1) `FileWriter` – testo (classico)
+## B1) `FileWriter` — testo (classico)
 
 ### Quando usarlo
-- Esercizi / programmi semplici
-- Non ti interessa controllare esplicitamente l’encoding
+Esercizi o programmi piccoli, dove l’encoding di default non ti crea problemi.
 
-### Esempio completo: overwrite
+---
+
+### B1.1 Esempio completo: overwrite
+
+✅ **Codice**
 
 ```java
 import java.io.FileWriter;
@@ -451,18 +451,15 @@ public class FileWriterOverwrite {
 
 #### Spiegazione riga per riga
 
-- `new FileWriter("...")`  
-  Apre/crea il file in modalità overwrite (default).
-
-- `writer.write(...)`  
-  Scrive testo.
-
-- `try-with-resources`  
-  Chiude automaticamente.
+- `new FileWriter("...")` → apre/crea in modalità overwrite.
+- `writer.write(...)` → scrive testo.
+- try-with-resources → chiude e flush automatico.
 
 ---
 
-### Esempio completo: append
+### B1.2 Esempio completo: append
+
+✅ **Codice**
 
 ```java
 import java.io.FileWriter;
@@ -481,16 +478,16 @@ public class FileWriterAppend {
 
 #### Spiegazione riga per riga
 
-- Il secondo parametro `true` abilita l’append.
+- `true` nel costruttore → abilita l’append.
 
 ---
 
-## B2) `BufferedWriter` (classico) – buffering su FileWriter
+## B2) `BufferedWriter` (classico) — buffering su `FileWriter`
 
 ### Quando usarlo
-- Stai facendo molte scritture consecutive e vuoi performance migliori.
+Scrivi tante volte e vuoi performance migliori rispetto a FileWriter “nudo”.
 
-### Esempio completo
+✅ **Codice**
 
 ```java
 import java.io.BufferedWriter;
@@ -514,21 +511,17 @@ public class BufferedWriterExample {
 
 #### Spiegazione riga per riga
 
-- `new BufferedWriter(new FileWriter(...))`  
-  Avvolge il FileWriter con un buffer.
-
-- `newLine()`  
-  Newline corretto OS.
+- `new BufferedWriter(new FileWriter(...))` → aggiunge buffering.
+- `newLine()` → newline portabile.
 
 ---
 
-## B3) `PrintWriter` – scrittura comoda (println/printf)
+## B3) `PrintWriter` — comodo (println/printf)
 
 ### Quando usarlo
-- Log, report, output formattato
-- Vuoi `println` e `printf` come in console
+Log e report formattati.
 
-### Esempio completo
+✅ **Codice**
 
 ```java
 import java.io.PrintWriter;
@@ -549,20 +542,19 @@ public class PrintWriterExample {
 
 #### Spiegazione riga per riga
 
-- `println` aggiunge newline automaticamente.
-- `printf` permette formattazione (`%d`, `%f`, ecc.) e `%n` è il newline portabile.
+- `println` → scrive e va a capo.
+- `printf` → formattazione; `%n` è newline portabile.
 
 ---
 
 # PARTE C — Scrittura binaria (byte)
 
-## C1) `FileOutputStream` – byte (binari)
+## C1) `FileOutputStream` — byte (binari)
 
 ### Quando usarlo
-- File binari: immagini, pdf, zip
-- Scrittura di bytes grezzi
+Immagini, pdf, zip, qualunque file non-testuale.
 
-### Esempio completo
+✅ **Codice**
 
 ```java
 import java.io.FileOutputStream;
@@ -583,18 +575,15 @@ public class FileOutputStreamExample {
 
 #### Spiegazione riga per riga
 
-- `byte[] data = { ... }`  
-  Dati binari. Qui 65/66/67 sono valori ASCII per A/B/C.
-
-- `new FileOutputStream("...")`  
-  Apre/crea file binario (overwrite default).
-
-- `fos.write(data)`  
-  Scrive bytes.
+- `byte[] data = {...}` → dati grezzi.
+- `new FileOutputStream(...)` → apre/crea file binario (overwrite default).
+- `fos.write(data)` → scrive bytes.
 
 ---
 
-### Esempio completo: append binario (solo per completezza)
+### C1.2 Esempio completo: append binario
+
+✅ **Codice**
 
 ```java
 import java.io.FileOutputStream;
@@ -615,16 +604,16 @@ public class FileOutputStreamAppend {
 
 #### Spiegazione riga per riga
 
-- Il `true` abilita l’append (aggiunge bytes in fondo).
+- `true` → append di bytes in fondo.
 
 ---
 
-## C2) `BufferedOutputStream` – byte con buffer
+## C2) `BufferedOutputStream` — byte con buffer
 
 ### Quando usarlo
-- Scrivi tanti byte o file grandi e vuoi performance migliori.
+Molti byte / file grandi → buffering = più performance.
 
-### Esempio completo
+✅ **Codice**
 
 ```java
 import java.io.BufferedOutputStream;
@@ -639,7 +628,7 @@ public class BufferedOutputStreamExample {
                  new BufferedOutputStream(new FileOutputStream("buffered_output.bin"))) {
 
             bos.write(data);
-            // bos.flush(); // opzionale: try-with-resources flush/close automaticamente
+            // bos.flush(); // opzionale: la close fa flush automaticamente
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -650,43 +639,36 @@ public class BufferedOutputStreamExample {
 
 #### Spiegazione riga per riga
 
-- `getBytes()` converte stringa → bytes (encoding di default; per controllo serio usare charset).
-- `BufferedOutputStream` bufferizza la scrittura.
+- `getBytes()` → converte stringa in bytes (encoding di default).
+- `BufferedOutputStream` → accumula e scrive a blocchi.
 
 ---
 
-# PARTE D — (Extra) Checklist “da esame / da progetto”
+# PARTE D — Checklist finale (da esame / progetto)
 
 ## Regole d’oro
-- Se scrivi testo in progetti moderni: **preferisci NIO**
-  - `Files.writeString`
-  - `Files.write`
-  - `Files.newBufferedWriter`
-- Specifica UTF-8 quando ha senso (`StandardCharsets.UTF_8`)
-- Usa sempre **try-with-resources**
-- Chiarisci sempre la modalità:
+- Testo moderno → **NIO** (`Files.writeString`, `Files.write`, `Files.newBufferedWriter`)
+- Specifica UTF-8 quando serve (`StandardCharsets.UTF_8`)
+- Sempre **try-with-resources**
+- Sii esplicito sulla modalità:
   - overwrite (truncate)
   - append
   - create-new
 
----
-
-## Scelta pratica (rapidissima)
-- Testo semplice (String) → `Files.writeString()`
-- Molte righe già in lista → `Files.write(List<String>)`
+## Scelta pratica rapidissima
+- String → `Files.writeString()`
+- List<String> → `Files.write(...)`
 - File generato in loop → `Files.newBufferedWriter()`
 - Log/report formattati → `PrintWriter`
 - Binari → `FileOutputStream` / `BufferedOutputStream`
 
----
-
 ## Perché chiudere è fondamentale
-Senza chiusura (o flush) rischi:
+Senza `close()` / `flush()` rischi:
 - dati non scritti (buffer non svuotato)
-- file “bloccato” (Windows)
-- risorse (handle) sprecate
+- file bloccato (Windows)
+- risorse sprecate
 
-Try-with-resources risolve tutto automaticamente.
+Try-with-resources risolve.
 
 ---
 
