@@ -17,11 +17,7 @@ public class ScritturaFile {
             file_scrittura.write("16 - Questa è una terza riga");
 
             file_scrittura.close();
-            
-            
-            
-            
-            
+
         } catch(FileNotFoundException e){
             System.out.println("non va bene!!!" + e);
             //creazione directory
