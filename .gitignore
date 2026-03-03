@@ -1,0 +1,16 @@
+
+# ===== Java/IDE build outputs =====
+*.class
+*.jar
+*.war
+*.ear
+out/
+bin/
+target/
+build/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
