@@ -1,21 +1,19 @@
 package com.exercise.utente;
 
 import java.io.*;
+import java.util.ArrayList;
 
 public class File {
 
-    public static void writeFile(String filename, Utente utente) throws IOException {
+    public static void writeFile(String filename, ArrayList<Utente> utenti) throws IOException {
         try {
             // Terza modalità
             // File scritto in append + metodo append + a capo
 
             FileWriter file_scrittura = new FileWriter(new java.io.File(filename), false);
-            file_scrittura.write("\n14 - Questa è una prova di scrittura di file.\n");
-
-            file_scrittura.write(utente.getUsername() + ";" + utente.getPassword());
-            file_scrittura.write("\n");
-            file_scrittura.write("16 - Questa è una terza riga");
-
+            for (Utente utente : utenti) {
+                file_scrittura.write(utente.getUsername() + ";" + utente.getPassword() + "\n");
+            }
             file_scrittura.close();
 
         } catch (FileNotFoundException e) {
@@ -29,16 +27,17 @@ public class File {
     public static void readFile(String filename) {
         // Prima modalità
         // lettura di file un carattere alla volta
-        try {
-            FileInputStream file_lettura = new FileInputStream(filename);
+        try (BufferedReader reader =
+                     new BufferedReader(new FileReader(filename))) {
 
-            int carattere_letto = file_lettura.read();
-            System.out.println(carattere_letto);
-            System.out.print((char)carattere_letto);
+            String line;
 
-            file_lettura.close();
-        } catch(Exception e){
-            System.out.println(e);
+            while ((line = reader.readLine()) != null) {
+                System.out.println(line);
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
