@@ -33,6 +33,4 @@ public class Grid {
         }
         return Grid[row][col];
     }
-
-
 }
