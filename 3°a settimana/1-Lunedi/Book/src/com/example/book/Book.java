@@ -1,24 +1,22 @@
 package com.example.book;
 
 public class Book implements Comparable<Book>{
-    private int page;
+    private int year;
     private String title;
     private String author;
+    private double price;
 
-    public Book( String title, String author, int page) {
+    public Book( String title, String author, int year, double price) {
         this.title = title;
         this.author = author;
-        this.page = page;
+        this.year = year;
+        this.price = price;
 
     }
 
-    public int getPage() {
-        return page;
-    }
+    public int getYear() { return year; }
 
-    public void setPage(int page) {
-        this.page = page;
-    }
+    public void setYear(int year) {this.year = year; }
 
     public String getTitle() {
         return title;
@@ -36,6 +34,9 @@ public class Book implements Comparable<Book>{
         this.author = author;
     }
 
+    public double getPrice() { return price; }
+
+    public void setPrice(double price) { this.price = price; }
 
     @Override
     public int compareTo(Book o) { // per fare la comparazione tra stringhe; mi torna un intero per comparare poi le iniziali delle stringhe
@@ -44,6 +45,11 @@ public class Book implements Comparable<Book>{
 
     @Override
     public String toString() { // per stampare a schermo
-        return "Book{" + "title=" + title + ", author=" + author + ", page=" + page + "}\n";
+        return  String.format(
+                "%s (%s, %d) - €%.2f",title,author,year,price
+        );
+        //return "Book{" + "title=" + title + ", author=" + author + ", year=" + year + ", price=" + price + "};\n";
     }
+
+
 }
